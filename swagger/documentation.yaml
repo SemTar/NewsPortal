@@ -1,0 +1,1412 @@
+openapi: 3.0.3
+info:
+  title: News portal - OpenAPI 3.0
+  description: |-
+    This is a sample news portal based on the OpenAPI 3.0 specification.  
+
+    Some useful links:
+    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
+    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.12
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://127.0.0.1:3333/
+
+tags:
+  - name: user/authorization
+  - name: user/profile
+  - name: user/categories
+  - name: user/comments
+  - name: user/news
+    description: describe news requests
+  - name: admin/news
+  - name: admin/users
+  - name: admin/comments
+  - name: admin/categories
+
+
+paths:
+  /user/create:
+    post:
+      tags:
+        - user/authorization
+      summary: registration a new user to the news portal
+      security: []
+      description: registration a new user to the news portal
+      requestBody:
+        description: Create a new user in the news portal
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailPassword'
+        required: true
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+  /user/login:
+    post:
+      tags:
+        - user/authorization
+      summary: login to the news portal
+      security: []
+      description: login to the news portal
+      requestBody:
+        description: user send email & password
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailPassword'
+      responses:
+        '200':
+          description: Successful operation, send auth token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        400:
+          $ref: '#/components/responses/ValidationError'
+  /user/passwordRecovery:
+    post:
+      tags:
+        - user/authorization
+      security: []
+      description: API send to this email link to recover password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: 'example@gmail.com'
+      responses:
+        200:
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+  /user/accessСheck/{refreshPasswordToken}:
+    get:
+      tags:
+        - user/authorization
+      description: access to password recovery
+      security: []
+      parameters:
+        - in: path
+          name: refreshPasswordToken
+          required: true
+          schema:
+            type: string
+            example: 'HffsoifhHFd3r4389dvhghrht34985'
+      responses:
+        200:
+          description: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /user/newPassword:
+    put:
+      tags:
+        - user/authorization
+      description: password recovery
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newPassword:
+                  type: string
+                  example: '123qwerty'
+                refreshPasswordTokens:
+                  type: string
+                  example: 'HffsoifhHFd3r4389dvhghrht34985'
+
+      responses:
+        200:
+          description: success
+        400:
+          $ref: '#/components/responses/InvalidData'
+
+  /user/profile/header:
+    get:
+      tags:
+        - user/profile
+      description: return little info about user (to fill in header)
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileHeader'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+  /user/profile:
+    get:
+      tags:
+        - user/profile
+      description: return user profile
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags:
+        - user/profile
+      description: update user information
+      requestBody:
+        description: send information to save in DB
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileWOImage'
+      responses:
+        200:
+          description: success
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        400:
+          $ref: '#/components/responses/InvalidData'
+
+  /user/profile/password:
+    put:
+      tags:
+        - user/profile
+      description: refresh user password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                  example: '123456'
+                newPassword:
+                  type: string
+                  example: '78910'
+      responses:
+        200:
+          description: success
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        400:
+          $ref: '#/components/responses/InvalidData'
+
+  /user/categories/list:
+    get:
+      security: [ ]
+      tags:
+        - user/categories
+      description: return categories
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoriesFilter'
+
+
+  /user/comment:
+    get:
+      parameters:
+        - in: query
+          name: newsId
+          required: true
+          schema:
+            type: number
+            example: 7
+      security: []
+      tags:
+        - user/comments
+      description: return comments of news
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        404:
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - user/comments
+      description: send comment of news
+      requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  newsId: 
+                    type: number
+                    example: 1
+                    required: true
+                  text:
+                    type: string
+                    example: 'this news is shit'
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+
+  /user/news/list/{numOfPage}:
+    get:
+      security: []
+      tags:
+        - user/news
+      description: return freshest news in the category
+      parameters:
+        - $ref: '#/components/parameters/NumOfPage'
+        - in: query
+          name: countOfNewsInPage
+          description: send the amount of news that
+            could be placed on the display
+          schema:
+            default: 10
+            type: number
+            example: 15
+        - in: query
+          name: categoryId
+          description: if = 0 then display all news
+          required: true
+          schema:
+            type: number
+            example: 2
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    example: 'other'
+                  lastPage:
+                    type: number
+                    example: 2
+                  elemArray:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NewsPreview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        400:
+          $ref: '#/components/responses/ValidationError'
+  /user/news/item/{id}:
+    get:
+      security: []
+      tags:
+        - user/news
+      description: return one news
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/News'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        400:
+          $ref: '#/components/responses/ValidationError'
+
+
+  /admin/news/list/{numOfPage}:
+    get:
+      tags:
+        - admin/news
+      description:  return list of news for administrate
+      parameters:
+        - $ref: '#/components/parameters/NumOfPage'
+        - $ref: '#/components/parameters/CountOfItemsInPage'
+        - $ref: '#/components/parameters/NewsFilters'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  countOfPage:
+                    type: number
+                    example: 14
+                  elemArray:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NewsFilter'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/news/item:
+    put:
+      tags:
+        - admin/news
+      description: send changed news
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NewsForAdminPut'
+      responses:
+        '200':
+          description: success
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        400:
+          $ref: '#/components/responses/ValidationError'
+    post:
+      tags:
+        - admin/news
+      description: send one created news
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateNewsForAdmin'
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/news/item/{id}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      tags:
+        - admin/news
+      description: return one news for administrate
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                    $ref: '#/components/schemas/NewsForAdminGet'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        400:
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      tags:
+        - admin/news
+      description: delete news from news portal
+      responses:
+        '200':
+          description: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        400:
+          $ref: '#/components/responses/ValidationError'
+
+
+
+  /admin/users/list/{numOfPage}:
+    get:
+      tags:
+        - admin/users
+      description: return list of users for administrate
+      parameters:
+        - $ref: '#/components/parameters/NumOfPage'
+        - $ref: '#/components/parameters/CountOfItemsInPage'
+        - $ref: '#/components/parameters/ProfileFilters'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lastPage:
+                    type: number
+                    example: 14
+                  elemArray:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProfileFilter'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        400:
+          $ref: '#/components/responses/ValidationError'
+  /admin/users/item:
+    put:
+      tags:
+        - admin/users
+      description: send changed user
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileForAdminPut'
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - admin/users
+      description: create new user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newUser:
+                  $ref: '#/components/schemas/EmailPassword'
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/users/item/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags:
+        - admin/users
+      description: return one user for administrate
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileForAdminGet'
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      tags:
+        - admin/users
+      description: delete user from news portal
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/users/item/passwordRefresh:
+    put:
+      tags:
+        - admin/users
+      description: refresh user password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: number
+                  example: 1
+                  required: true
+                password:
+                  type: string
+                  example: '1234qwerty'
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+
+  /admin/comments/list/{numOfPage}:
+    get:
+      tags:
+        - admin/comments
+      description: return list of comments for administrate
+      parameters:
+        - $ref: '#/components/parameters/NumOfPage'
+        - $ref: '#/components/parameters/CountOfItemsInPage'
+        - $ref: '#/components/parameters/CommentFilterRequest'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lastPage:
+                    type: number
+                    example: 14
+                  elemArray:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommentFilterResponse'
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/comments/item/:
+    put:
+      tags:
+        - admin/comments
+      description: send changed comment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: number
+                  example: 1
+                  required: true
+                text:
+                  type: string
+                  example: 'I am a stupid commentator'
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/comments/item/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags:
+        - admin/comments
+      description: return one comment for administrate
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                    $ref: '#/components/schemas/CommentForAdmin'
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      tags:
+        - admin/comments
+      description: delete comment from news portal
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+
+
+  /admin/categories/list/{numOfPage}:
+    get:
+      tags:
+        - admin/categories
+      description: return list of categories for administrate
+      parameters:
+        - $ref: '#/components/parameters/NumOfPage'
+        - $ref: '#/components/parameters/CountOfItemsInPage'
+        - $ref: '#/components/parameters/CategoriesFilters'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  countOfPage:
+                    type: number
+                    example: 1
+                  elemArray:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CategoriesFilter'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/categories/item:
+    post:
+      tags:
+        - admin/categories
+      description: create new category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  example: 'policy'
+      responses:
+        '200':
+          description: success
+        400:
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/categories/item/{id}:
+    delete:
+      tags:
+        - admin/categories
+      description: delete category from news portal
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+
+
+
+components:
+  parameters:
+    NumOfPage:
+      in: path
+      name: numOfPage
+      required: true
+      schema:
+        type: integer
+        example: 7
+    CountOfItemsInPage:
+      in: query
+      name: countOfItemsInPage
+      description: send amount of items that could be placed on the display
+      schema:
+        type: number
+        default: 8
+        example: 2
+    Id:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: integer
+        example: 2
+    NewsFilters:
+      in: query
+      name: filters
+      schema:
+        $ref: '#/components/schemas/NewsFilter'
+    ProfileFilters:
+      in: query
+      name: filters
+      schema:
+        $ref: '#/components/schemas/ProfileFilter'
+    CommentFilterRequest:
+      in: query
+      name: filters
+      schema:
+        $ref: '#/components/schemas/CommentForFilter'
+    CategoriesFilters:
+      in: query
+      name: filters
+      schema:
+        $ref: '#/components/schemas/CategoriesFilter'
+  schemas:
+    EmailPassword:
+      type: object
+      properties:
+        email:
+          type: string
+          example: example@gmail.com
+        password:
+          type: string
+          example: 1234QwertY
+    News:
+      type: object
+      properties:
+        category:
+          type: string
+          example: 'policy'
+        date:
+          type: string
+          format: date
+          example: '2017-07-21'
+        image:
+          type: string
+          example: 'exampleCloud.com/image'
+        title:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        text:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+           a late-night “slow jams” DJ from San Diego who’s also known as 
+           “the Sultan of Slowjamastan.” “I ran out of countries,
+            so I created my own.DJ from San Diego who’s also known as 
+            DJ from San Diego who’s also known as 
+            DJ from San Diego who’s also known as 
+            DJ from San Diego who’s also known as ”'
+    CreateNewsForAdmin:
+      type: object
+      properties:
+        category:
+          type: string
+          example: 'policy'
+        date:
+          type: string
+          format: date
+          example: '2017-07-21'
+        imagePreview:
+          type: string
+          format: binary
+        image:
+          type: string
+          format: binary
+        title:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        textPreview:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+           a late-night “slow jams” DJ from San Diego who’s also known as 
+           “the Sultan of Slowjamastan.”'
+        text:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+           a late-night “slow jams” DJ from San Diego who’s also known as 
+           “the Sultan of Slowjamastan.” “I ran out of countries,
+            so I created my own.DJ from San Diego who’s also known as 
+            DJ from San Diego who’s also known as 
+            DJ from San Diego who’s also known as 
+            DJ from San Diego who’s also known as ”'
+    NewsForAdminGet:
+      type: object
+      properties:
+        category:
+          type: string
+          example: 'policy'
+        date:
+          type: string
+          format: date
+          example: '2017-07-21'
+        imagePreview:
+          type: string
+          example: 'exampleCloud.com/imagePreview'
+        image:
+          type: string
+          example: 'exampleCloud.com/image'
+        title:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        textPreview:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+               a late-night “slow jams” DJ from San Diego who’s also known as 
+               “the Sultan of Slowjamastan.”'
+        text:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+               a late-night “slow jams” DJ from San Diego who’s also known as 
+               “the Sultan of Slowjamastan.” “I ran out of countries,
+                so I created my own.DJ from San Diego who’s also known as 
+                DJ from San Diego who’s also known as 
+                DJ from San Diego who’s also known as 
+                DJ from San Diego who’s also known as ”'
+        isPublished:
+          type: boolean
+          example: true
+    NewsForAdminPut:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+          required: true
+        imagePreview:
+          type: string
+          format: binary
+        image:
+          type: string
+          format: binary
+        category:
+          type: string
+          example: 'policy'
+        date:
+          type: string
+          format: date
+          example: '2017-07-21'
+        title:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        textPreview:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+               a late-night “slow jams” DJ from San Diego who’s also known as 
+               “the Sultan of Slowjamastan.”'
+        text:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+               a late-night “slow jams” DJ from San Diego who’s also known as 
+               “the Sultan of Slowjamastan.” “I ran out of countries,
+                so I created my own.DJ from San Diego who’s also known as 
+                DJ from San Diego who’s also known as 
+                DJ from San Diego who’s also known as 
+                DJ from San Diego who’s also known as ”'
+        isPublished:
+          type: boolean
+          example: true
+    NewsPreview:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        date:
+          type: string
+          format: date
+          example: '2017-07-21'
+        imagePreview:
+          type: string
+          example: 'exampleCloud.com/imagePreview'
+        title:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        textPreview:
+          type: string
+          example: '“I like to put it simply,” says Randy “R Dub!” Williams,
+           a late-night “slow jams” DJ from San Diego who’s also known as 
+           “the Sultan of Slowjamastan.”'
+        category:
+          type: string
+          example: 'policy'
+    Comment:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: 'Peter'
+        secondName:
+          type: string
+          example: 'Ivanov'
+        profilePhoto:
+          type: string
+          example: 'example.com/14758854'
+        text:
+          type: string
+          example: 'this news is trash'
+        date:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+    AuthToken:
+      type: object
+      properties:
+        type:
+          type: string
+          example: 'bearer'
+        authToken:
+          type: string
+          example: 'MTg.wNKu65df7tA0PQ_FbLpK6yAsMDO9hdRkBSAYmvooGDm-mQbK1ngTM9TdMzBE'
+        expires_at:
+          type: string
+          example: '2023-07-15T13:18:59.305+03:00'
+    Profile:
+      type: object
+      properties:
+        image:
+          type: string
+          format: url
+          example: 'example.com/14758854'
+        firstName:
+          type: string
+          example: 'Ivan'
+        secondName:
+          type: string
+          example: 'Ivanov'
+        email:
+          type: string
+          format: email
+          example: 'ivanov.ivan@gmail.com'
+        phoneNumber:
+          type: string
+          example: '79991117766'
+        birthday:
+          type: string
+          format: date
+          example: '1999-07-21'
+        city:
+          type: string
+          example: 'Moscow'
+    ProfileForAdminGet:
+      type: object
+      properties:
+        image:
+          type: string
+          format: url
+          example: 'example.com/14758854'
+        firstName:
+          type: string
+          example: 'Ivan'
+        secondName:
+          type: string
+          example: 'Ivanov'
+        email:
+          type: string
+          format: email
+          example: 'ivanov.ivan@gmail.com'
+        phoneNumber:
+          type: string
+          example: '79991117766'
+        birthday:
+          type: string
+          format: date
+          example: '1999-07-21'
+        city:
+          type: string
+          example: 'Moscow'
+        role:
+          type: number
+          example: 10
+        isActive:
+          type: boolean
+          example: true
+    ProfileForAdminPut:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+          required: true
+        image:
+          type: string
+          format: binary
+        firstName:
+          type: string
+          example: 'Ivan'
+        secondName:
+          type: string
+          example: 'Ivanov'
+        email:
+          type: string
+          format: email
+          example: 'ivanov.ivan@gmail.com'
+        phoneNumber:
+          type: string
+          example: '79991117766'
+        birthday:
+          type: string
+          format: date
+          example: '1999-07-21'
+        city:
+          type: string
+          example: 'Moscow'
+        role:
+          type: number
+          example: 10
+        isActive:
+          type: boolean
+          example: true
+    ProfileWOImage:
+      type: object
+      properties:
+        image:
+          type: string
+          format: binary
+        firstName:
+          type: string
+          example: 'Ivan'
+        secondName:
+          type: string
+          example: 'Ivanov'
+        email:
+          type: string
+          format: email
+          example: 'ivanov.ivan@gmail.com'
+        phoneNumber:
+          type: string
+          example: '79991117766'
+        birthday:
+          type: string
+          format: date
+          example: '1999-07-21'
+        city:
+          type: string
+          example: 'Moscow'
+    ProfileHeader:
+      type: object
+      properties:
+        role:
+          type: number
+          example: 10
+        image:
+          type: string
+          format: url
+          example: 'example.com/14758854'
+        firstName:
+          type: string
+          example: 'Ivan'
+        secondName:
+          type: string
+          example: 'Ivanov'
+    Username:
+      type: string
+      example: 'Ivan Ivanov'
+    NewsFilter:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        date:
+          type: string
+          format: date
+          example: '2017-07-21'
+        title:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        category:
+          type: string
+          example: other
+        isPublished:
+          type: boolean
+          example: true
+    ProfileFilter:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 123
+        createdAt:
+          type: string
+          example: 22.03.2020
+        firstName:
+          type: string
+          example: 'Ivan'
+        secondName:
+          type: string
+          example: 'Ivanov'
+        email:
+          type: string
+          format: email
+          example: 'ivanov.ivan@gmail.com'
+        role:
+          type: number
+          example: 10
+        isActive:
+          type: boolean
+          example: true
+    CommentForFilter:
+      type: object
+      properties:
+        commentId:
+          type: number
+          example: 222
+        date:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        userId:
+          type: number
+          example: 22
+        userEmail:
+          type: string
+          example: 'example@gmail.com'
+        newsTitle:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        text:
+          type: string
+          example: 'this news is trash'
+    CommentFilterResponse:
+      type: object
+      properties:
+        commentId:
+          type: number
+          example: 222
+        date:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        userId:
+          type: number
+          example: 22
+        userEmail:
+          type: string
+          example: 'example@gmail.com'
+        newsId:
+          type: number
+          example: 22
+        newsTitle:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        text:
+          type: string
+          example: 'this news is trash'
+    CommentForAdmin:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        date:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        userId:
+          type: number
+          example: 22
+        userEmail:
+          type: string
+          example: 'example@gmail.com'
+        newsId:
+          type: number
+          example: 123
+        newsTitle:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        text:
+          type: string
+          example: 'this news is trash'
+    CommentFilter:
+      type: object
+      properties:
+        commentId:
+          type: number
+          example: 222
+        date:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        userId:
+          type: number
+          example: 22
+        userEmail:
+          type: string
+          example: 'example@gmail.com'
+        newsId:
+          type: number
+          example: 123
+        newsTitle:
+          type: string
+          example: 'He ran out of countries to visit, so he created his own'
+        text:
+          type: string
+          example: 'this news is trash'
+    CategoriesFilter:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 3
+        name:
+          type: string
+          example: 'fresh'
+    Error:
+      type: object
+      properties:
+        code:
+          type: number
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+
+  responses:
+    ValidationError:
+      description: 'Validation error'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                default: 1
+              message:
+                default: 'Validation error'
+              description:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        rule:
+                          type: string
+                          example: 'alphaNum'
+                        field:
+                          type: string
+                          example: 'password'
+                        message:
+                          type: string
+                          example: 'alphaNum validation failed'
+    InvalidData:
+      description: 'Invalid data'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                default: 2
+              message:
+                default: 'Invalid data'
+    Forbidden:
+      description: The client does not have access rights to the content
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                default: 5
+              message:
+                default: 'The client does not have access rights to the content'
+    Unauthorized:
+      description:  The client request has not been completed because
+        it lacks valid authentication credentials for the requested resource.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                default: 3
+              message:
+                default: 'the client request has not been completed because it 
+                lacks valid authentication credentials for the requested resource.'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                default: 4
+              message:
+                default: 'The specified resource was not found'
+
+    BadRequest:
+      description: The server cannot or will not process the request
+        due to something that is perceived to be a client error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      in: header
+security:
+  - api_key: []

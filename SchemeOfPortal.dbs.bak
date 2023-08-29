@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="news_portal" id="Project-16b4" database="PostgreSQL" >
+	<schema name="news_portal" >
+		<table name="news" prior="n" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="user_id" type="integer" jt="4" mandatory="y" />
+			<column name="title" type="varchar" length="200" jt="12" />
+			<column name="text" type="text" length="250" jt="12" />
+			<index name="pk_news" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="fk_news_users" to_schema="news_portal" to_table="users" update_action="cascade" >
+				<fk_column name="user_id" pk="id" />
+			</fk>
+		</table>
+		<table name="users" prior="tbl" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="username" type="varchar" length="100" jt="12" mandatory="y" />
+			<index name="pk_users" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+	</schema>
+	<layout name="Default Layout" id="Layout-c19" show_relation="columns" >
+		<comment><![CDATA[Default Layout]]></comment>
+		<entity schema="news_portal" name="news" color="C1D8EE" x="384" y="112" />
+		<entity schema="news_portal" name="users" color="C1D8EE" x="48" y="48" />
+	</layout>
+</project>

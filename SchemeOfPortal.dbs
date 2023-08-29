@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="news_portal" id="Project-16b4" database="PostgreSQL" >
+	<schema name="news_portal" >
+		<table name="auth_tokens" prior="tokens" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="user_id" type="integer" jt="4" mandatory="y" />
+			<column name="token" type="varchar" length="100" jt="12" mandatory="y" />
+			<column name="created_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<column name="updated_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<index name="pk_tokens" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="fk_tokens_users" to_schema="news_portal" to_table="users" delete_action="cascade" update_action="cascade" >
+				<fk_column name="user_id" pk="id" />
+			</fk>
+		</table>
+		<table name="categories" prior="cat" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="100" jt="12" mandatory="y" />
+			<index name="pk_categories" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="coments" prior="tbl" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="post_id" type="integer" jt="4" mandatory="y" />
+			<column name="user_id" type="integer" jt="4" />
+			<column name="text" type="text" length="2500" jt="12" />
+			<column name="date" type="date" jt="91" />
+			<column name="created_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<column name="updated_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<index name="pk_coments" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="fk_coments_news" to_schema="news_portal" to_table="news" delete_action="cascade" update_action="cascade" >
+				<fk_column name="post_id" pk="id" />
+			</fk>
+			<fk name="fk_coments_users" to_schema="news_portal" to_table="users" delete_action="setNull" update_action="cascade" >
+				<fk_column name="user_id" pk="id" />
+			</fk>
+		</table>
+		<table name="news" prior="n" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="user_id" type="integer" jt="4" />
+			<column name="categories_id" type="integer" jt="4" >
+				<defo><![CDATA[1]]></defo>
+			</column>
+			<column name="title" type="varchar" length="200" jt="12" />
+			<column name="date" type="date" jt="91" />
+			<column name="is_published" prior="published" type="boolean" jt="16" mandatory="y" >
+				<defo><![CDATA[true]]></defo>
+			</column>
+			<column name="image" prior="news_cover" type="varchar" length="100" jt="12" />
+			<column name="image_preview" prior="news_preview" type="varchar" length="100" jt="12" />
+			<column name="text" prior="news_text" type="text" jt="12" />
+			<column name="text_preview" prior="news_text_preview" type="varchar" length="1000" jt="12" />
+			<column name="created_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<column name="updated_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<index name="pk_news" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="fk_news_users" to_schema="news_portal" to_table="users" delete_action="setNull" update_action="cascade" >
+				<fk_column name="user_id" pk="id" />
+			</fk>
+			<fk name="fk_news_categories" to_schema="news_portal" to_table="categories" delete_action="setNull" update_action="cascade" >
+				<fk_column name="categories_id" pk="id" />
+			</fk>
+		</table>
+		<table name="profile" prior="p" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="user_id" type="integer" jt="4" mandatory="y" />
+			<column name="first_name" type="varchar" length="100" jt="12" />
+			<column name="second_name" type="varchar" length="100" jt="12" />
+			<column name="phone_number" type="integer" jt="4" />
+			<column name="birthday" type="date" jt="91" />
+			<column name="city" type="varchar" length="100" jt="12" />
+			<column name="profile_photo" type="varchar" length="100" jt="12" />
+			<column name="created_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<column name="updated_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<index name="pk_profile" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="unq_profile" unique="UNIQUE_KEY" >
+				<column name="user_id" />
+			</index>
+			<fk name="fk_profile_users" to_schema="news_portal" to_table="users" delete_action="cascade" update_action="cascade" >
+				<fk_column name="user_id" pk="id" />
+			</fk>
+		</table>
+		<table name="refresh_password_tokens" prior="refresh_password_to" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="user_id" type="integer" jt="4" mandatory="y" />
+			<column name="token" type="varchar" length="100" jt="12" mandatory="y" />
+			<column name="is_active" type="boolean" jt="16" mandatory="y" >
+				<defo><![CDATA[true]]></defo>
+			</column>
+			<column name="created_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<column name="updated_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<index name="pk_refresh_password_tokens" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="fk_refresh_password_tokens_users" to_schema="news_portal" to_table="users" delete_action="cascade" update_action="cascade" >
+				<fk_column name="user_id" pk="id" />
+			</fk>
+		</table>
+		<table name="users" prior="tbl" >
+			<column name="id" type="serial" jt="4" mandatory="y" />
+			<column name="email" type="varchar" length="255" jt="12" mandatory="y" />
+			<column name="password" prior="passw" type="varchar" length="255" jt="12" mandatory="y" />
+			<column name="role" prior="is_admin" type="smallint" jt="5" mandatory="y" >
+				<comment><![CDATA[1 - user
+10 - admin]]></comment>
+			</column>
+			<column name="is_active" type="boolean" jt="16" mandatory="y" >
+				<defo><![CDATA[true]]></defo>
+			</column>
+			<column name="created_at" prior="registration_date" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<column name="updated_at" type="timestamp" jt="93" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+			</column>
+			<index name="pk_users" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+	</schema>
+	<layout name="Default Layout" id="Layout-c19" show_relation="columns" >
+		<comment><![CDATA[Default Layout]]></comment>
+		<entity schema="news_portal" name="auth_tokens" color="C1D8EE" x="64" y="48" />
+		<entity schema="news_portal" name="categories" color="C1D8EE" x="496" y="96" />
+		<entity schema="news_portal" name="coments" color="C1D8EE" x="672" y="336" />
+		<entity schema="news_portal" name="news" color="C1D8EE" x="336" y="256" />
+		<entity schema="news_portal" name="profile" color="C1D8EE" x="64" y="512" />
+		<entity schema="news_portal" name="refresh_password_tokens" color="C1D8EE" x="224" y="48" />
+		<entity schema="news_portal" name="users" color="C1D8EE" x="48" y="240" />
+	</layout>
+</project>
